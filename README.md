@@ -9,7 +9,7 @@ This programme can mask 200 image in about 1 second, compare to the minutes for 
 ## Usage
 To use this programme without modification, you will need the `cards.atlas` file and the big card image from 1 to 5, which both can be found in the game's jar file. I would not include those file here because I don't want to get DMCA'd.
 
-Off-cause you also need the image you want to replace named with the card id. Strikes and defend are treated differently as all classes have them, so you need to provide the image with the name `strike_<color>.png` and `defend_<color>.png` respectively. For example watcher's defend will be `defend_p.png` (p because purple).
+Of course, you also need the image you want to replace named with the card id. Strikes and defend are treated differently as all classes have them, so you need to provide the image with the name `strike_<color>.png` and `defend_<color>.png` respectively. For example watcher's defend will be `defend_p.png` (p because purple).
 
 With these fill you will need to put them in this structure
 ```
