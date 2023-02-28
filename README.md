@@ -3,7 +3,8 @@
 This project is made so that I can easily replace vanilla card art by just providing this program with a 500 * 380 image.
 
 Originally I used [JohnnyBazooka89/StSModdingToolCardImagesCreator](https://github.com/JohnnyBazooka89/StSModdingToolCardImagesCreator) to mask the image,
-but it is so god dame slow (maybe because it is written in Java IDK) that I also integrated the masking into this program. So I guess with some modifications this program can also replace that Java one.
+but it is so god dame slow (maybe because it is written in Java IDK) that I also integrated the masking into this program. So I guess with some modifications this program can also replace that Java one. 
+This programme can mask 200 image in about 1 second, compare to the minutes for the java one I'd say it is a lot faster.
 
 ## Usage
 To use this programme without modification, you will need the `cards.atlas` file and the big card image from 1 to 5, which both can be found in the game's jar file. I would not include those file here because I don't want to get DMCA'd.
