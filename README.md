@@ -1,6 +1,6 @@
 # Slay the Spire Card Maker
 
-This project is made so that I can easily replace vanilla card art by just providing this program with a 500 * 380 image.
+This project is made so that I can easily replace vanilla card art by just providing this programme with a 500 * 380 image.
 
 Originally I used [JohnnyBazooka89/StSModdingToolCardImagesCreator](https://github.com/JohnnyBazooka89/StSModdingToolCardImagesCreator) to mask the image,
 but it is so god dame slow (maybe because it is written in Java IDK) that I also integrated the masking into this program. So I guess with some modifications this program can also replace that Java one. 

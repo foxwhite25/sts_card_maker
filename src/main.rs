@@ -1,18 +1,18 @@
 use image::{GenericImage, GenericImageView};
 use itertools::Itertools;
 
+use log::{debug, info, warn};
+use rayon::prelude::*;
 use std::fs;
 use std::io::BufReader;
 use std::ops::Add;
 use std::path::Path;
-use log::{debug, info, warn};
-use rayon::prelude::*;
 
 #[derive(Debug)]
 struct CardInfo {
     character: String,
     file_name: String,
-    type_name: String,
+    type_name: Option<String>,
     card_name: String,
     position: (u32, u32),
     size: (u32, u32),
@@ -40,11 +40,14 @@ macro_rules! unwrap_or_return {
 }
 
 fn main() {
-    env_logger::builder().filter_level(log::LevelFilter::Info).init();
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Info)
+        .init();
     let input = fs::read_to_string("data/cards.atlas").unwrap();
     let cards = parse_input(input);
 
     mask_sprites(&cards);
+    check_not_exist(&cards);
     modify_sprites(&cards);
     move_sprites(&cards);
     check_valid_sprites(&cards);
@@ -70,10 +73,16 @@ fn parse_input(input: String) -> Vec<CardInfo> {
                     iter.next();
                     let position = iter.next().unwrap();
 
-                    let mut path_iter = path.split("/");
-                    let character = path_iter.next()?.to_string();
-                    let type_name = path_iter.next()?.to_string();
-                    let card_name = path_iter.next()?.to_string();
+                    let path_iter = path.split("/").collect_vec();
+                    let (character, type_name, card_name) = if path_iter.len() == 2 {
+                        (path_iter[0].to_string(), None, path_iter[1].to_string())
+                    } else {
+                        (
+                            path_iter[0].to_string(),
+                            Some(path_iter[1].to_string()),
+                            path_iter[2].to_string(),
+                        )
+                    };
                     let position = position.split(": ").nth(1).unwrap();
                     let (x, y) = position.split_once(", ").expect(position);
                     let x = x.parse::<u32>().unwrap();
@@ -99,22 +108,41 @@ fn parse_input(input: String) -> Vec<CardInfo> {
         .collect_vec()
 }
 
+fn check_not_exist(cards: &Vec<CardInfo>) {
+    info!("Checking not exist");
+    cards
+        .iter()
+        .for_each(|card| {
+            let path = format!("data/masked/{}.png", card.modified_card_name());
+            if !Path::new(&path).exists() {
+                warn!("{} does not exist", card.modified_card_name());
+            }
+        });
+}
+
 fn mask_sprites(cards: &Vec<CardInfo>) {
     info!("Masking sprites");
     cards.par_iter().for_each(|card| {
-        let mask_name = match card.type_name.as_str() {
-            "attack" => "AttackMask_p.png",
-            "power" => "PowerMask_p.png",
-            _ => "SkillMask_p.png",
+        let mask_name = match card.type_name {
+            Some(ref x) => match x.as_str() {
+                "attack" => "AttackMask_p.png",
+                "power" => "PowerMask_p.png",
+                _ => "SkillMask_p.png",
+            },
+            None => "SkillMask_p.png",
         };
         let mask = image::open(format!("data/masks/{}", mask_name)).unwrap();
-        let file = unwrap_or_return!(fs::File::open(format!("data/original/{}.png", card.modified_card_name())));
+        let file = unwrap_or_return!(fs::File::open(format!(
+            "data/original/{}.png",
+            card.modified_card_name()
+        )));
         let buf_reader = BufReader::new(file);
         let mut original = image::io::Reader::new(buf_reader)
             .with_guessed_format()
             .unwrap()
             .decode()
-            .unwrap().into_rgba8();
+            .unwrap()
+            .into_rgba8();
 
         debug!("Masking {} with {}", card.modified_card_name(), mask_name);
 
@@ -188,7 +216,7 @@ fn modify_sprites(cards: &Vec<CardInfo>) {
             card.modified_card_name()
         )));
         debug!("Modifying card: {:?}", card);
-        let modified = card_image.crop_imm(0, 0, card.size.0, card.size.1);
+        let modified = card_image.crop_imm(0, 0, card.size.0.clone(), card.size.1.clone());
 
         let original_idx = card
             .file_name
@@ -201,7 +229,7 @@ fn modify_sprites(cards: &Vec<CardInfo>) {
             - 1;
         let original = originals.get_mut(original_idx).unwrap();
         original
-            .copy_from(&modified, card.position.0, card.position.1)
+            .copy_from(&modified, card.position.0.clone(), card.position.1.clone())
             .expect(format!("Failed to copy card {:?}, {}", card, original_idx).as_str());
     });
     create_path_if_not_exist("data/new/cards/cards.png");
@@ -220,10 +248,16 @@ fn move_sprites(cards: &Vec<CardInfo>) {
     info!("Moving sprites");
     cards.par_iter().for_each(|card| {
         let og_path = format!("data/masked/{}_p.png", card.modified_card_name());
-        let new_path = format!(
-            "data/new/images/1024Portraits/{}/{}/{}.png",
-            card.character, card.type_name, card.card_name
-        );
+        let new_path = match card.type_name {
+            Some(ref type_name) => format!(
+                "data/new/images/1024Portraits/{}/{}/{}.png",
+                card.character, type_name, card.card_name
+            ),
+            None => format!(
+                "data/new/images/1024Portraits/{}/{}.png",
+                card.character, card.card_name
+            ),
+        };
 
         create_path_if_not_exist(&new_path);
 
