@@ -160,7 +160,7 @@ fn mask_sprites(cards: &Vec<CardInfo>) {
 
         original.save(&p_path).unwrap();
         let p = image::open(p_path).unwrap();
-        let resized = p.resize(250, 190, image::imageops::FilterType::Nearest);
+        let resized = p.resize(250, 190, image::imageops::FilterType::CatmullRom);
         resized.save(s_path).unwrap();
     });
 }
@@ -249,10 +249,15 @@ fn move_sprites(cards: &Vec<CardInfo>) {
     cards.par_iter().for_each(|card| {
         let og_path = format!("data/masked/{}_p.png", card.modified_card_name());
         let new_path = match card.type_name {
-            Some(ref type_name) => format!(
-                "data/new/images/1024Portraits/{}/{}/{}.png",
-                card.character, type_name, card.card_name
-            ),
+            Some(ref type_name) => {
+                if type_name == "status" && card.card_name == "beta" {
+                    return;
+                }
+                format!(
+                    "data/new/images/1024Portraits/{}/{}/{}.png",
+                    card.character, type_name, card.card_name
+                )
+            },
             None => format!(
                 "data/new/images/1024Portraits/{}/{}.png",
                 card.character, card.card_name
